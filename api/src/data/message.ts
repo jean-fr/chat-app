@@ -1,14 +1,12 @@
 import { addEntity, getEntityById, listEntitiesByField } from './db-client';
-
+import * as firebase from 'firebase-admin';
 export interface IMessage {
   id: string;
   text: string;
-  emoji: string;
-  time: Date;
+  time: firebase.firestore.Timestamp;
   replyId: string;
   authorId: string;
   roomId: string;
-  isReadBy: string[];
   isDeleted?: boolean;
 }
 
@@ -21,19 +19,16 @@ const messagesCollectionName = 'messages';
 export const addMessage = async ({
   text,
   authorId,
-  emoji,
   replyId,
-  isReadBy,
   roomId,
 }: IMessageCreate): Promise<IMessage> => {
   return addEntity(messagesCollectionName, {
     text,
     authorId,
-    emoji,
     replyId,
-    isReadBy,
-    time: new Date(),
+    time: firebase.firestore.Timestamp.now(),
     roomId,
+    isDeleted: false,
   });
 };
 export const getMessageById = async (id: string): Promise<IMessage | null> => {

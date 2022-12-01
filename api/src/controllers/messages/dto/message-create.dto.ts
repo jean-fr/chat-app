@@ -1,16 +1,11 @@
-import { IsArray, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { IMessageCreate } from '../../../data/message';
 
 export class MessageCreateDto implements IMessageCreate {
-  @IsArray()
-  isReadBy: string[];
-
   @IsString()
   text: string;
 
-  @IsString()
-  emoji: string;
-
+  @IsOptional()
   @IsString()
   replyId: string;
 

@@ -41,8 +41,8 @@ export class ChatsGateway
     console.log('socket client initialized');
   }
 
-  @SubscribeMessage('subscribeToSweepstake')
-  async subscribeToSweepstake(
+  @SubscribeMessage('subscribeToChatRoom')
+  async subscribeToChatRoom(
     @Body() body: UserSubscribeToChatDto,
     @ConnectedSocket() socket: Socket,
   ) {
@@ -54,6 +54,7 @@ export class ChatsGateway
       });
       throw new WsException('Resource not found');
     }
+    console.log('subscribed To ChatRoom', room);
     await socket.join(roomId);
   }
 }

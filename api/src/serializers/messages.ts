@@ -1,17 +1,16 @@
 import { getUserById, IUser } from '../data/user';
 import { IMessage } from '../data/message';
 import { IChatRoom } from '../data/chat-room';
+import { dateToString } from '../utils/dates';
 
 export interface ApiMessage {
   id: string;
   text: string;
-  emoji: string;
   time: string;
   replyId: string;
   author: IUser;
   room: IChatRoom;
-  isReadBy: string[];
-  isDeleted?: boolean;
+  isDeleted: boolean;
 }
 
 export const toAPIMessage = async (
@@ -22,12 +21,10 @@ export const toAPIMessage = async (
   return {
     id: message.id,
     text: message.text,
-    time: message.time.toUTCString(),
+    time: dateToString(message.time.toDate()),
     replyId: message.replyId,
     author,
     room,
-    isReadBy: message.isReadBy,
     isDeleted: message.isDeleted,
-    emoji: message.emoji,
   };
 };

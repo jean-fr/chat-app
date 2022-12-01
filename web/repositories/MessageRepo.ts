@@ -2,7 +2,7 @@ import { ApiMessage, IMessageCreate } from ".";
 import _APIRepo from "./_APIRepo";
 
 export default class MessageRepo extends _APIRepo {
-  public addMessage = async (data: IMessageCreate): Promise<ApiMessage> => {
+  public createMessage = async (data: IMessageCreate): Promise<ApiMessage> => {
     return this.http.post(this.url, data);
   };
 

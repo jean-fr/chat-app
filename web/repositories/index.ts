@@ -8,12 +8,10 @@ import UserRepo from "./UserRepo";
 export interface ApiMessage {
   id: string;
   text: string;
-  emoji: string;
   time: string;
   replyId: string;
   author: IUser;
   room: IChatRoom;
-  isReadBy: string[];
   isDeleted?: boolean;
 }
 
@@ -27,7 +25,7 @@ export interface IChatRoom {
   attendees: string[];
 }
 
-export interface IMessageCreate extends Omit<ApiMessage, "id" | "time" | "author" | "isReadBy" | "isDeleted" | "room"> {
+export interface IMessageCreate extends Pick<Partial<ApiMessage>, "text" | "replyId"> {
   authorId: string;
   roomId: string;
 }

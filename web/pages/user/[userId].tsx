@@ -21,9 +21,10 @@ import {
   styled,
   Typography,
 } from "@mui/material";
+import parse from "html-react-parser";
 import { Editor } from "@tinymce/tinymce-react";
 import { useRouter } from "next/router";
-import React, { useRef } from "react";
+import React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { websocketClient } from "../../clients/websocket";
 import Api, { ApiMessage, IChatRoom, IUser } from "../../repositories";
@@ -37,11 +38,11 @@ export default function User() {
   const [room, setRoom] = useState<IChatRoom>();
   const [user, setUser] = useState<IUser>();
   const [users, setUsers] = useState<Array<IUser>>([]);
-  const [messageText, setMessageText] = useState<string>();
   const [isGroupChat, setIsGroupChat] = useState<boolean>();
   const [selectedUser, setSelectedUser] = useState<string>();
   const [roomAttendees, setRoomAttendees] = useState<IUser[]>([]);
   const [roomMessages, setRoomMessages] = useState<ApiMessage[]>([]);
+  const [textMessage, setTextMessage] = useState<string>();
 
   const api = new Api();
 
@@ -52,6 +53,10 @@ export default function User() {
   const loadRooms = async (userId: string) => {
     const rms = await api.chatRooms.listRoomsByUser(userId);
     setRooms(rms);
+  };
+  const loadRoomMessages = async (roomId: string) => {
+    const messages = await api.messages.listMessageByRoomId(roomId);
+    setRoomMessages(messages);
   };
   const handleGroupChat = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsGroupChat(event.target.checked);
@@ -78,15 +83,14 @@ export default function User() {
     }
   };
 
-  const initWebsocket = () => {
-    if (room) {
-      const wsc = websocketClient();
-      wsc.subscribe(room.id);
-      wsc.onServerMessage((data: ApiMessage) => {
-        // add to list
-        setRoomMessages([...roomMessages, data]);
-      });
-    }
+  const initWebsocket = (roomId: string) => {
+    const wsc = websocketClient();
+    wsc.subscribe(roomId);
+    wsc.onServerMessage((data: ApiMessage) => {
+      // add to list
+      const newList: ApiMessage[] = [...roomMessages];
+      setRoomMessages(newList.concat([data]));
+    });
   };
 
   const startChat = async () => {
@@ -113,7 +117,7 @@ export default function User() {
       setRoom(chatRoom);
       setRooms([...rooms, chatRoom]);
       setRoomName(`Chat room ${rooms.length + 1}`);
-      initWebsocket();
+      initWebsocket(chatRoom.id);
     } catch (error) {
       console.log(error);
       alert("error");
@@ -126,12 +130,28 @@ export default function User() {
       // set attendees
       const attendeeds = users.filter((u) => chatRoom.attendees.includes(u.id));
       setRoomAttendees(attendeeds);
-
       setRoom(chatRoom);
-      initWebsocket();
+      await loadRoomMessages(chatRoom.id);
+      initWebsocket(chatRoom.id);
     } catch (error) {
       console.log(error);
       alert("error");
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!user || !textMessage || !room) {
+      return;
+    }
+    try {
+      await api.messages.createMessage({
+        authorId: user.id,
+        text: textMessage,
+        roomId: room.id,
+      });
+    } catch (error) {
+      console.log(error);
+      alert("ERROR");
     }
   };
 
@@ -196,7 +216,7 @@ export default function User() {
                 const labelId = `checkbox-list-label-${i}`;
                 return (
                   <ListItem
-                    key={"k"}
+                    key={i}
                     secondaryAction={
                       <IconButton edge="end" aria-label="comments">
                         <CommentIcon />
@@ -220,16 +240,25 @@ export default function User() {
         </Box>
 
         <Box display={"flex"} width={"70%"} flexDirection={"column"} pl={2}>
-          <Box>
-            <Typography variant="h4">{roomName || "Chat"}</Typography>{" "}
-            <Typography>{`Users in room :  ${roomAttendees.map((u) => u.name).join(", ")}`}</Typography>
-          </Box>
+          {roomAttendees.length > 0 && (
+            <Box>
+              <Typography variant="h4">{roomName || "Chat"}</Typography>{" "}
+              <Typography>{`Users in room :  ${roomAttendees.map((u) => u.name).join(", ")}`}</Typography>
+            </Box>
+          )}
 
           {room && (
             <Box display={"flex"} flexDirection={"column"}>
-              <Box display={"flex"} height={250} border={"1px solid #DEDEDE"} borderRadius={2}>
+              <Box display={"flex"} height={250} border={"1px solid #DEDEDE"} borderRadius={2} overflow={"scroll"}>
                 <Stack direction="column" width={1} p={1}>
-                  <Item>Item 1</Item>
+                  {roomMessages.map((m, i) => {
+                    return (
+                      <Box key={`b-${i}`} width={1} textAlign={m.author.id !== user?.id ? "left" : "right"}>
+                        <Typography variant={"subtitle1"}>{`${m.author.name} | ${m.time}`} </Typography>
+                        <Item key={i}> {parse(m.text)} </Item>
+                      </Box>
+                    );
+                  })}
                 </Stack>
               </Box>
               <Box display={"flex"} my={3} minHeight={100} width={1} flexDirection={"row"}>
@@ -246,21 +275,21 @@ export default function User() {
                       max_height: 500,
                       width: "100%",
                       placeholder: "Enter message . . .",
-                      toolbar:
-                        "bold italic strikethrough link numlist bullist blockquote emoticons image | mySendButton",
+                      toolbar: "bold italic strikethrough link numlist bullist blockquote emoticons image | sendButton",
                       setup: (editor) => {
-                        editor.ui.registry.addButton("mySendButton", {
+                        editor.ui.registry.addButton("sendButton", {
                           tooltip: "Send Message",
                           text: "Send",
-                          onAction: () => {
-                            const txt = editor.getContent();
-                            if (txt) {
-                              setMessageText(txt);
-                              editor.resetContent();
-                            }
+                          onAction: function () {
+                            sendMessage();
+                            editor.resetContent();
                           },
                         });
                       },
+                    }}
+                    onEditorChange={(newText) => {
+                      console.log(newText);
+                      setTextMessage(newText);
                     }}
                   />
                 </>
@@ -278,6 +307,6 @@ const Item = styled(Paper)(({ theme }) => ({
   alignItems: "stretch",
   ...theme.typography.body2,
   padding: theme.spacing(1),
-  textAlign: "left",
+
   color: "#fff",
 }));
