@@ -6,12 +6,17 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { getRoom } from '../../data/chat-room';
-import { getUserById } from '../../data/user';
-import { addMessage, IMessage, listMessageByRoomId } from '../../data/message';
+
 import { MessageCreateDto } from './dto/message-create.dto';
 import { ISocketService } from '../../chats/services/socket/socket.service';
 import { ApiMessage, toAPIMessage } from '../../serializers/messages';
+import { getRoom } from '../../data/firestore/chat-room';
+import {
+  addMessage,
+  listMessageByRoomId,
+  IMessage,
+} from 'src/data/firestore/message';
+import { getUserById } from '../../data/firestore/user';
 
 @Controller('messages')
 export class MessageController {
@@ -35,17 +40,24 @@ export class MessageController {
       roomId,
     });
 
-    const apiMessage = await toAPIMessage(m, room);
-    const result = await this.socketService.emit(
-      'userSendMessage',
-      roomId,
-      apiMessage,
-    );
-    console.log('userSendMessage | ', result);
-    return apiMessage;
+    let messages = await listMessageByRoomId(roomId);
+
+    const msgs: ApiMessage[] = [];
+
+    messages = messages.sort((a: IMessage, b: IMessage) => {
+      return a.time.toMillis() - b.time.toMillis();
+    });
+
+    for (const m of messages) {
+      const am = await toAPIMessage(m, room);
+      msgs.push(am);
+    }
+
+    await this.socketService.emit('userSendMessage', roomId, msgs);
+    return await toAPIMessage(m, room);
   }
 
-  @Get('roomId/:roomId')
+  @Get('room/:roomId')
   async listMessageByRoomId(
     @Param('roomId') roomId: string,
   ): Promise<ApiMessage[]> {

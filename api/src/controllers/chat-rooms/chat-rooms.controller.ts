@@ -6,14 +6,13 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-
 import {
-  addChatRoom,
-  getRoom,
   IChatRoom,
+  addChatRoom,
   listRooms,
+  getRoom,
   listRoomsByUserId,
-} from '../../data/chat-room';
+} from '../../data/firestore/chat-room';
 
 import { ChatRoomCreateDto } from './dto/chat-room-create.dto';
 

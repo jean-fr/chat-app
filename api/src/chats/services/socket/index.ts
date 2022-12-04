@@ -10,7 +10,7 @@ export class SocketService implements ISocketService {
   async emit(
     event: ServerEventType,
     roomId: string,
-    message: ApiMessage,
+    message: ApiMessage[],
   ): Promise<boolean> {
     return this.socket.to(roomId).emit(event, message);
   }

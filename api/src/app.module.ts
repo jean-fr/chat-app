@@ -7,6 +7,12 @@ import { UserController } from './controllers/users/users.controller';
 @Module({
   imports: [ChatsModule],
   controllers: [ChatRoomController, MessageController, UserController],
-  providers: [],
+  providers: [
+    // {
+    //   provide: IDataClients,
+    //   useClass: MongoClientsService,
+    //   scope: Scope.REQUEST,
+    // },
+  ],
 })
 export class AppModule {}

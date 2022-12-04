@@ -12,7 +12,8 @@ import { Server, Socket } from 'socket.io';
 import { ISocketService } from './services/socket/socket.service';
 import { Body } from '@nestjs/common';
 import { UserSubscribeToChatDto } from './dto/user-subscribe-to-chat.dto';
-import { getRoom } from '../data/chat-room';
+import { getRoom } from '../data/firestore/chat-room';
+import { UserOnTypingDto } from './dto/user-typing.dto';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -56,5 +57,22 @@ export class ChatsGateway
     }
     console.log('subscribed To ChatRoom', room);
     await socket.join(roomId);
+  }
+
+  @SubscribeMessage('userOnTyping')
+  async userOnTyping(
+    @Body() body: UserOnTypingDto,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    const { roomId, name, email } = body;
+    const room = await getRoom(roomId);
+    if (!room) {
+      console.log('no room found with roomId', {
+        roomId,
+      });
+      throw new WsException('Resource not found');
+    }
+    console.log('User is typing in ChatRoom', name, email, room);
+    await socket.to(roomId).emit('userOnTyping', body);
   }
 }

@@ -25,8 +25,8 @@ import * as path from 'path';
 // var admin = require("firebase-admin");
 
 const serviceAccount = path.resolve(
-  __dirname,
-  'chat-app7-7-firebase-adminsdk-6tyv7-e0358de151.json',
+  '/Users/jean/Projects/chats-app/api/src/config/',
+  'chat-app-v2-887ab-firebase-adminsdk-muk6p-5de84907e3.json',
 );
 
 let app: firebase.app.App;

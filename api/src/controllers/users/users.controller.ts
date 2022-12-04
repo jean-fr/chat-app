@@ -7,15 +7,15 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
-import { getRoom } from '../../data/chat-room';
+import { getRoom } from '../../data/firestore/chat-room';
 import {
-  addUser,
-  getUserByEmail,
-  getUserById,
   IUser,
-  listAllUsers,
+  getUserByEmail,
+  addUser,
+  getUserById,
   listUserByRoomId,
-} from '../../data/user';
+  listAllUsers,
+} from '../../data/firestore/user';
 import { UserCreateDto } from './dto/user-create.dto';
 
 @Controller('users')
@@ -50,7 +50,7 @@ export class UserController {
     }
     return u;
   }
-  @Get('roomId/:roomId')
+  @Get('room/:roomId')
   async listUserByRoomId(@Param('roomId') roomId: string): Promise<IUser[]> {
     const room = getRoom(roomId);
 

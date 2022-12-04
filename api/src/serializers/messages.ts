@@ -1,6 +1,6 @@
-import { getUserById, IUser } from '../data/user';
-import { IMessage } from '../data/message';
-import { IChatRoom } from '../data/chat-room';
+import { IChatRoom } from '../data/firestore/chat-room';
+import { IMessage } from '../data/firestore/message';
+import { getUserById, IUser } from 'src/data/firestore/user';
 import { dateToString } from '../utils/dates';
 
 export interface ApiMessage {

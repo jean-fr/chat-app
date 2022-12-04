@@ -8,6 +8,6 @@ export abstract class ISocketService {
   abstract emit(
     event: ServerEventType,
     roomId: string,
-    message: ApiMessage,
+    message: ApiMessage[],
   ): Promise<boolean>;
 }
